@@ -21,6 +21,7 @@ export const insert = (array, rightIndex, value) => {
         array[j + 1] = array[j];
     }   
     array[j + 1] = value; 
+    return j + 1;
 };
 
 export const merge = function(array, p, q, r) {
