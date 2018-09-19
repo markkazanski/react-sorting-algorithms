@@ -79,3 +79,38 @@ export const merge = function(array, p, q, r) {
 export const randomIntFromInterval = (min,max) => {
     return Math.floor(Math.random()*(max-min+1)+min);
 }
+
+export const partition = (array, p, r) => {
+    // Compare array[j] with array[r], for j = p, p+1,...r-1
+    // maintaining that:
+    //  array[p..q-1] are values known to be <= to array[r]
+    //  array[q..j-1] are values known to be > array[r]
+    //  array[j..r-1] haven't been compared with array[r]
+    // If array[j] > array[r], just increment j.
+    // If array[j] <= array[r], swap array[j] with array[q],
+    //   increment q, and increment j. 
+    // Once all elements in array[p..r-1]
+    //  have been compared with array[r],
+    //  swap array[r] with array[q], and return q.
+    
+    //p, r, j, q
+    var q = p;
+    
+    for(var j = p; j < r; j++){
+        if(array[j] <= array[r]){
+            swap(array, j, q);
+            q++;
+        }
+    }
+    swap(array, q, r);
+    return q;
+};
+
+export const isSorted  = (array) => {
+    let done = true;
+    for(let i=0; i<array.length-1; i++){
+        if(array[i] > array[i+1])
+            done = false;
+    }
+    return done;
+}

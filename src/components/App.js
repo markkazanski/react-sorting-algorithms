@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import './App.css';
-import { swap, indexOfMinimum, insert, merge, randomIntFromInterval } from '../helpers';
+import { swap, indexOfMinimum, insert, merge, randomIntFromInterval, partition, isSorted } from '../helpers';
 //666, 5, 999, 4, 3, 500, 1, 350, 2, 800, 6, 100
 class App extends Component {
   state = {
-    speed: 750,
+    speed: 500,
     selectionSortArray: [],
     selectionSteps: 0,
     selectionCounter: null,
@@ -21,7 +21,14 @@ class App extends Component {
 
     bubbleSortArray: [],
     bubbleSorted: false,
-    bubbleCounter: null
+    bubbleCounter: null,
+    bubbleSteps: 0,
+
+    quickSortArray: [],
+    quickCounter: null, 
+    quickCounter2: null, 
+    quickCounter3: null, 
+    quickSteps: 0
   }
 //bg-success
   componentDidMount(){
@@ -44,12 +51,16 @@ class App extends Component {
     this.state.mergeCounter2 = 0;
     this.state.mergeCounter3 = 0;
     this.state.bubbleCounter = 0;
+    this.state.quickCounter = 0;
+    this.state.quickCounter2 = 1;
+    this.state.quickCounter3 = newArray.length - 1;
 
     newArray.forEach(x => {
       this.state.selectionSortArray.push(x);
       this.state.insertionSortArray.push(x);
       this.state.mergeSortArray.push(x);
       this.state.bubbleSortArray.push(x);
+      this.state.quickSortArray.push(x);
     })
     
     
@@ -58,6 +69,7 @@ class App extends Component {
       insertionSortArray: this.state.insertionSortArray,
       mergeSortArray: this.state.mergeSortArray,
       bubbleSortArray: this.state.bubbleSortArray,
+      quickSortArray: this.state.quickSortArray,
       selectionSortSteps: 0,
       insertionSortSteps: 0,
       mergeSortSteps: 0
@@ -69,7 +81,7 @@ class App extends Component {
     let array = this.state.selectionSortArray;
     if(i < array.length){
         const min = indexOfMinimum(array, i);
-        console.log('min',)
+        //console.log('min',)
         
         this.setState({selectionCounter: i, selectionCounter2: min}, () => swap(array, i, min));
         
@@ -92,21 +104,6 @@ class App extends Component {
     }
   };
 
-  bubbleSort(){
-    let arr = this.state.bubbleSortArray;
-    let sorted = false
-
-    while(!sorted) {
-      sorted = true
-      for(var i=0; i < arr.length; i++) {
-        if(arr[i] < arr[i-1]) {
-          swap(arr, i-1, i);
-          sorted = false;
-        }
-      }
-    }
-  }
-
   bubbleSortSteps(){
     let arr = this.state.bubbleSortArray;
     let sorted = this.state.bubbleSorted;
@@ -122,16 +119,16 @@ class App extends Component {
         }
       }
       if(!sorted)
-        setTimeout(() => this.bubbleSortSteps(), this.state.speed);
+        setTimeout(() => this.setState({bubbleSteps: this.state.bubbleSteps + 1}, () => this.bubbleSortSteps()), this.state.speed);
     }
   }
 
   mergeSortSteps = (p, r) => {
     let array = this.state.mergeSortArray;
     
-    console.log('r', r, 'p', p);
-    if(r-p >= 1){
-        setTimeout(() => this.setState({ mergeSteps: this.state.mergeSteps + 1 }, () => console.log("merge steps", this.state.mergeSteps)), this.state.speed );
+    //console.log('r', r, 'p', p);
+    if(r-p >= 1 && !isSorted(array)){
+        setTimeout(() => this.setState({ mergeSteps: this.state.mergeSteps + 1 }), this.state.speed );
         let q = Math.floor((r + p) / 2);
         //this.setState({mergeCounter: p, mergeCounter2: q, mergeCounter3: r});
         this.mergeSortSteps(p, q);
@@ -139,16 +136,34 @@ class App extends Component {
         setTimeout(() => this.setState({
           mergeSortArray: array,
           mergeCounter: p, mergeCounter2: q, mergeCounter3: r
-        }, () => merge(array, p, q, r)), this.state.speed);
+        }, () => {
+          merge(array, p, q, r);
+        }), this.state.speed);
     } 
   };
 
-sort = () => {
-  this.insertionSortSteps(0);
-  this.selectionSortSteps(0);
-  this.mergeSortSteps(0, this.state.mergeSortArray.length - 1);
-  this.bubbleSortSteps();
-}
+  quickSortSteps = (p, r) => {
+    let array = this.state.quickSortArray;
+    if(1 <= r-p){
+        var q = partition(array, p, r);
+        console.log('q: ', q);
+        setTimeout( () => this.setState({
+          quickSortArray: array,
+          quickSteps: this.state.quickSteps + 1, 
+          quickCounter: p,
+          quickCounter2: q,
+          quickCounter3: r
+        }, () => { this.quickSortSteps(p, q-1); this.quickSortSteps(q+1, r); }), this.state.speed ); 
+    }
+  };
+
+  sort = () => {
+    this.insertionSortSteps(0);
+    this.selectionSortSteps(0);
+    this.mergeSortSteps(0, this.state.mergeSortArray.length - 1);
+    this.bubbleSortSteps();
+    this.quickSortSteps(0, this.state.quickSortArray.length-1);
+  }
 
   render() {
     return (
@@ -196,7 +211,7 @@ sort = () => {
           </div>
 
           <div class='col-sm'>
-            <p>Bubble Sort - Steps: </p>
+            <p>Bubble Sort - Steps: {this.state.bubbleSteps}</p>
             <ul>
               {this.state.bubbleSortArray.map((num, i) => 
                 <div className='progress'><div style={{width: num + '%'}} 
@@ -205,6 +220,21 @@ sort = () => {
                     (this.state.bubbleCounter === i ? ' bg-info ' : null) + 
                     (this.state.bubbleCounter === i + 1 ? ' bg-success ' : null)
                   } key={'sel' + num}>{num}</div></div>
+                )}
+            </ul>
+          </div>
+
+          <div class='col-sm'>
+            <p>Quick Sort - Steps: {this.state.quickSteps}</p>
+            <ul>
+              {this.state.quickSortArray.map((num, i) => 
+                <div className='progress'><div style={{width: num + '%'}} 
+                  className={
+                    ('progress-bar ') + 
+                    (this.state.quickCounter === i ? ' bg-info ' : null) + 
+                    (this.state.quickCounter2 === i ? ' bg-warning ' : null) + 
+                    (this.state.quickCounter3 === i ? ' bg-success ' : null)
+                  } key={'qui' + num}>{num}</div></div>
                 )}
             </ul>
           </div>
